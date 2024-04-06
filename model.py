@@ -9,18 +9,23 @@ from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, precision_recall_curve
 
 # CNN model definition
-class CNN(nn.Module):
+class CombinedCNN(nn.Module):
     def __init__(self):
-        super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=5)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=5)
-        self.fc1 = nn.Linear(4*4*64, 128)  # Adjusted for 4x4 input feature map
-        self.fc2 = nn.Linear(128, 10)  # 10 output classes
+        super(CombinedCNN, self).__init__()
+        # Change 1: Adjusted kernel sizes
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3)  # Kernel size changed to 3
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3)  # Kernel size changed to 3
+        # Change 2: Added an additional convolutional layer
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3)  # Additional conv layer
+        # Change 3: Altered the number of neurons in the fully connected layer
+        self.fc1 = nn.Linear(3*3*128, 256)  # Adjusted for additional conv layer & changed neurons
+        self.fc2 = nn.Linear(256, 10)  # Output layer
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2(x), 2))
-        x = x.view(-1, 4*4*64)  # Adjust flattening according to your input
+        x = F.relu(F.max_pool2d(self.conv3(x), 2))  # Processing through the third conv layer
+        x = x.view(-1, 3*3*128)  # Flatten the output for the fully connected layer
         x = F.relu(self.fc1(x))
         return self.fc2(x)
 
